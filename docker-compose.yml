@@ -1,0 +1,92 @@
+services:
+  mysql:
+    image: mysql:8.4.2
+    container_name: mysql
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    command:
+      - --mysql-native-password=on
+      - --lower_case_table_names=1
+    volumes:
+      - ./mysql/data/:/var/lib/mysql
+      - ./mysql/conf/my.cnf:/etc/my.cnf
+      - ./mysql/log:/var/log/mysql
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+
+  postgresql:
+    image: postgres:17.0-alpine
+    container_name: postgresql
+    restart: always
+    ports:
+      - 5432:5432
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+    environment:
+      - POSTGRES_USER=${PG_ROOT_USER}
+      - POSTGRES_PASSWORD=${PG_ROOT_PASSWORD}
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 20s
+      test:
+        - CMD
+        - pg_isready
+        - -h
+        - 127.0.0.1
+        - -p
+        - "5432"
+        - -q
+        - -U
+        - ${PG_ROOT_USER}
+      timeout: 5s
+    volumes:
+      - ./postgresql/data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7.4.0
+    container_name: redis
+    restart: always
+    ports:
+      - 6379:6379
+    command: |
+      sh -c ' if [ -z "${REDIS_ROOT_PASSWORD}" ]; then
+        redis-server /etc/redis/redis.conf
+      else
+        redis-server /etc/redis/redis.conf --requirepass ${REDIS_ROOT_PASSWORD}
+      fi'
+    volumes:
+      - ./redis/data:/data
+      - ./redis/conf/redis.conf:/etc/redis/redis.conf
+      - ./redis/logs:/logs
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  mongodb:
+    image: mongo:7.0.14
+    container_name: mongodb
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - ./mongo/data:/data/db
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
