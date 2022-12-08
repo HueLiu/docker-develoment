@@ -1,0 +1,11 @@
+version: '3'
+services:
+  harley-ubuntu:
+    image: "harleyliu/ubuntu:latest"
+    build: .
+    container_name: harley-ubuntu
+    tty: true
+    volumes:
+      - /media/harley/data/Docker/ubuntu:/opt/
+    environment:
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
